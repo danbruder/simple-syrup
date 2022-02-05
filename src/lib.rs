@@ -56,16 +56,18 @@ impl<Q: ObjectType + 'static, M: ObjectType + 'static, S: SubscriptionType + 'st
             self.builder.finish()
         };
 
-        let graphql_post = async_graphql_warp::graphql(schema).and_then(
-            |(schema, request): (Schema<Q, M, S>, async_graphql::Request)| async move {
-                Ok::<_, Infallible>(GraphQLResponse::from(schema.execute(request).await))
-            },
-        );
+        let graphql_post = warp::path!("graphql")
+            .and(async_graphql_warp::graphql(schema))
+            .and_then(
+                |(schema, request): (Schema<Q, M, S>, async_graphql::Request)| async move {
+                    Ok::<_, Infallible>(GraphQLResponse::from(schema.execute(request).await))
+                },
+            );
 
         let graphql_playground = warp::path!("playground").and(warp::get()).map(|| {
             HttpResponse::builder()
                 .header("content-type", "text/html")
-                .body(playground_source(GraphQLPlaygroundConfig::new("/")))
+                .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
         });
 
         let routes = graphql_playground
