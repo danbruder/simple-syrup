@@ -9,7 +9,7 @@ documentation = "https://docs.rs/simple-syrup"
 readme = "README.md"
 repository = "https://github.com/danbruder/simple-syrup/"
 
-include = ["migrations", "src", "Cargo.toml"]
+include = ["/migrations/", "src", "Cargo.toml"]
 
 
 [dependencies]
