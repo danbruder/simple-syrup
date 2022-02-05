@@ -9,7 +9,7 @@ use std::fs;
 use std::str::FromStr;
 use warp::{http::Response as HttpResponse, http::StatusCode, Filter, Rejection};
 
-pub use anyhow;
+pub use anyhow::{self, Result};
 pub use async_graphql::{
     self, EmptyMutation, EmptySubscription, Object, Schema, SchemaBuilder, SimpleObject,
 };
