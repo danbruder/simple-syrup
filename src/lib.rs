@@ -110,7 +110,7 @@ impl SimpleSqlite {
 
     pub async fn migrate(&self) {
         fs::create_dir_all("migrations").expect("Couldn't create migrations dir");
-        sqlx::migrate!().run(&self.pool).await.ok();
+        sqlx::migrate!("./migrations").run(&self.pool).await.ok();
     }
 
     pub fn pool(&self) -> SqlitePool {
