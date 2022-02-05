@@ -5,7 +5,6 @@ use async_graphql_warp::{GraphQLBadRequest, GraphQLResponse};
 use dotenv::dotenv;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::convert::Infallible;
-use std::env;
 use std::fs;
 use std::str::FromStr;
 use warp::{http::Response as HttpResponse, http::StatusCode, Filter, Rejection};
@@ -27,29 +26,41 @@ pub struct SimpleSyrup<
     S: SubscriptionType + 'static,
 > {
     builder: SchemaBuilder<Q, M, S>,
+    sqlite_url: Option<String>,
 }
 
 impl<Q: ObjectType + 'static, M: ObjectType + 'static, S: SubscriptionType + 'static>
     SimpleSyrup<Q, M, S>
 {
     pub fn new(builder: SchemaBuilder<Q, M, S>) -> Self {
-        Self { builder }
+        Self {
+            builder,
+            sqlite_url: None,
+        }
+    }
+
+    pub fn with_sqlite(self, sqlite_url: &str) -> Self {
+        Self {
+            sqlite_url: Some(sqlite_url.to_string()),
+            ..self
+        }
     }
 
     pub async fn run(self) {
         dotenv().ok();
-        let database_url = env::var("DATABASE_URL").unwrap_or("sqlite://data.db".to_string());
 
-        let options = SqliteConnectOptions::from_str(&database_url)
-            .unwrap()
-            .create_if_missing(true);
-        let pool = SqlitePoolOptions::new().connect_lazy_with(options);
+        let schema = if let Some(url) = self.sqlite_url {
+            let options = SqliteConnectOptions::from_str(&url)
+                .unwrap()
+                .create_if_missing(true);
+            let pool = SqlitePoolOptions::new().connect_lazy_with(options);
+            fs::create_dir_all("migrations").expect("Couldn't create migrations dir");
+            sqlx::migrate!().run(&pool).await.ok();
 
-        fs::create_dir_all("migrations").expect("Couldn't create migrations dir");
-
-        sqlx::migrate!().run(&pool).await.ok();
-
-        let schema = self.builder.data(pool.clone()).finish();
+            self.builder.data(pool.clone()).finish()
+        } else {
+            self.builder.finish()
+        };
 
         let graphql_post = async_graphql_warp::graphql(schema).and_then(
             |(schema, request): (Schema<Q, M, S>, async_graphql::Request)| async move {
