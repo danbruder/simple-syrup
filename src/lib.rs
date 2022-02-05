@@ -3,7 +3,7 @@ use async_graphql::{ObjectType, SubscriptionType};
 use async_graphql_warp::{GraphQLBadRequest, GraphQLResponse};
 
 use dotenv::dotenv;
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use std::convert::Infallible;
 use std::fs;
 use std::str::FromStr;
@@ -20,28 +20,29 @@ pub use sqlx;
 pub use tokio;
 pub use uuid;
 
-pub struct SimpleSyrup<
+/// SimpleGraphql
+pub struct SimpleGraphql<
     Q: ObjectType + 'static,
     M: ObjectType + 'static,
     S: SubscriptionType + 'static,
 > {
     builder: SchemaBuilder<Q, M, S>,
-    sqlite_url: Option<String>,
+    sqlite: Option<SimpleSqlite>,
 }
 
 impl<Q: ObjectType + 'static, M: ObjectType + 'static, S: SubscriptionType + 'static>
-    SimpleSyrup<Q, M, S>
+    SimpleGraphql<Q, M, S>
 {
     pub fn new(builder: SchemaBuilder<Q, M, S>) -> Self {
         Self {
             builder,
-            sqlite_url: None,
+            sqlite: None,
         }
     }
 
-    pub fn with_sqlite(self, sqlite_url: &str) -> Self {
+    pub fn with_sqlite(self, sqlite: SimpleSqlite) -> Self {
         Self {
-            sqlite_url: Some(sqlite_url.to_string()),
+            sqlite: Some(sqlite),
             ..self
         }
     }
@@ -49,15 +50,8 @@ impl<Q: ObjectType + 'static, M: ObjectType + 'static, S: SubscriptionType + 'st
     pub async fn run(self) {
         dotenv().ok();
 
-        let schema = if let Some(url) = self.sqlite_url {
-            let options = SqliteConnectOptions::from_str(&url)
-                .unwrap()
-                .create_if_missing(true);
-            let pool = SqlitePoolOptions::new().connect_lazy_with(options);
-            fs::create_dir_all("migrations").expect("Couldn't create migrations dir");
-            sqlx::migrate!().run(&pool).await.ok();
-
-            self.builder.data(pool.clone()).finish()
+        let schema = if let Some(sqlite) = self.sqlite {
+            self.builder.data(sqlite.pool()).finish()
         } else {
             self.builder.finish()
         };
@@ -90,6 +84,35 @@ impl<Q: ObjectType + 'static, M: ObjectType + 'static, S: SubscriptionType + 'st
                 ))
             });
 
+        println!("Running on 0.0.0.0:3030");
+        println!("\t/playground");
+        println!("\t/graphql");
         warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
+    }
+}
+
+/// SimpleSqlite
+pub struct SimpleSqlite {
+    pool: SqlitePool,
+}
+
+impl SimpleSqlite {
+    pub fn new(filename: &str) -> Self {
+        let url = format!("sqlite://{}", filename);
+        let options = SqliteConnectOptions::from_str(&url)
+            .unwrap()
+            .create_if_missing(true);
+        let pool = SqlitePoolOptions::new().connect_lazy_with(options);
+
+        Self { pool }
+    }
+
+    pub async fn migrate(&self) {
+        fs::create_dir_all("migrations").expect("Couldn't create migrations dir");
+        sqlx::migrate!().run(&self.pool).await.ok();
+    }
+
+    pub fn pool(&self) -> SqlitePool {
+        self.pool.clone()
     }
 }
