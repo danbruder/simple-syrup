@@ -3,6 +3,13 @@ name = "simple-syrup"
 version = "0.1.0"
 edition = "2021"
 description = "the fastest way to a graphql endpoint running in rust"
+license = "MIT OR Apache-2.0"
+authors = ["Dan <danbruder@hey.com>"]
+documentation = "https://docs.rs/simple-syrup"
+readme = "README.md"
+repository = "https://github.com/danbruder/simple-syrup/"
+
+
 
 [dependencies]
 anyhow = "1.0.53"
