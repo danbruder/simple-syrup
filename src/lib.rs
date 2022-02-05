@@ -5,7 +5,6 @@ use async_graphql_warp::{GraphQLBadRequest, GraphQLResponse};
 use dotenv::dotenv;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::convert::Infallible;
-use std::fs;
 use std::str::FromStr;
 use warp::{http::Response as HttpResponse, http::StatusCode, Filter, Rejection};
 
@@ -106,11 +105,6 @@ impl SimpleSqlite {
         let pool = SqlitePoolOptions::new().connect_lazy_with(options);
 
         Self { pool }
-    }
-
-    pub async fn migrate(&self) {
-        fs::create_dir_all("migrations").expect("Couldn't create migrations dir");
-        sqlx::migrate!("./migrations").run(&self.pool).await.ok();
     }
 
     pub fn pool(&self) -> SqlitePool {

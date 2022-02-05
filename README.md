@@ -42,24 +42,21 @@ use simple_syrup::*;
 
 #[tokio::main]
 async fn main() {
-  let db = SimpleSqlite::new("foo.db");
-  db.migrate().await;
+    let db = SimpleSqlite::new("foo.db");
+    let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription);
 
-  let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription);
-
-  SimpleGraphql::new(schema).with_sqlite(db).run().await
+    SimpleGraphql::new(schema).with_sqlite(db).run().await
 }
 
 struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
-  async fn two(&self, ctx: &Context<'_>) -> Result<i64> {
-      let pool = ctx.data::<SqlitePool>()?;
+    async fn two(&self, ctx: &Context<'_>) -> Result<i64> {
+        let pool = ctx.data::<SqlitePool>()?;
 
-      let result: (i64,) = sqlx::query_as("SELECT 1 + 1").fetch_one(&*pool).await?;
-      Ok(result.0)
-  }
+        let result: (i64,) = sqlx::query_as("SELECT 1 + 1").fetch_one(&*pool).await?;
+        Ok(result.0)
+    }
 }
 ```
-
