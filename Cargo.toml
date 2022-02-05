@@ -2,6 +2,7 @@
 name = "simple-syrup"
 version = "0.1.0"
 edition = "2021"
+description = "the fastest way to a graphql endpoint running in rust"
 
 [dependencies]
 anyhow = "1.0.53"
