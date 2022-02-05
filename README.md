@@ -6,7 +6,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-simple-syrup = "0.5.1"
+simple-syrup = "0.5.2"
 ```
 
 ```rust
@@ -30,7 +30,7 @@ impl QueryRoot {
 ```
 
 ```bash
-Running at http://0.0.0.0:3000
+Running at http://0.0.0.0:3030
 
 Routes:
     /graphql

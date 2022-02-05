@@ -1362,7 +1362,7 @@ dependencies = [
 
 [[package]]
 name = "simple-syrup"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "anyhow",
  "async-graphql",
