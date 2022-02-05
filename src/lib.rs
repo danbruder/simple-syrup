@@ -86,9 +86,10 @@ impl<Q: ObjectType + 'static, M: ObjectType + 'static, S: SubscriptionType + 'st
                 ))
             });
 
-        println!("Running on 0.0.0.0:3030");
-        println!("\t/playground");
+        println!("Running at http://0.0.0.0:3030");
+        println!("\nRoutes:");
         println!("\t/graphql");
+        println!("\t/playground");
         warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
     }
 }

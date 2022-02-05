@@ -6,7 +6,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-simple-syrup = "0.3.0"
+simple-syrup = "0.5.1"
 ```
 
 ```rust
@@ -30,9 +30,11 @@ impl QueryRoot {
 ```
 
 ```bash
-Running on 0.0.0.0:3000
-    /playground
+Running at http://0.0.0.0:3000
+
+Routes:
     /graphql
+    /playground
 ```
 
 With [sqlx](https://crates.io/crates/sqlx) and a sqlite database: 
