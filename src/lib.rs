@@ -28,6 +28,12 @@ pub struct SimpleGraphql<
 > {
     builder: SchemaBuilder<Q, M, S>,
     sqlite: Option<SimpleSqlite>,
+    spa: Option<SpaConfig>,
+}
+
+pub struct SpaConfig {
+    assets: String,
+    index: String,
 }
 
 impl<Q: ObjectType + 'static, M: ObjectType + 'static, S: SubscriptionType + 'static>
@@ -37,12 +43,23 @@ impl<Q: ObjectType + 'static, M: ObjectType + 'static, S: SubscriptionType + 'st
         Self {
             builder,
             sqlite: None,
+            spa: None,
         }
     }
 
     pub fn with_sqlite(self, sqlite: SimpleSqlite) -> Self {
         Self {
             sqlite: Some(sqlite),
+            ..self
+        }
+    }
+
+    pub fn with_spa(self, assets_dir: &str, index_file: &str) -> Self {
+        Self {
+            spa: Some(SpaConfig {
+                assets: assets_dir.to_string(),
+                index: index_file.to_string(),
+            }),
             ..self
         }
     }
@@ -70,28 +87,45 @@ impl<Q: ObjectType + 'static, M: ObjectType + 'static, S: SubscriptionType + 'st
                 .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
         });
 
-        let routes = graphql_playground
-            .or(graphql_post)
-            .recover(|err: Rejection| async move {
-                if let Some(GraphQLBadRequest(err)) = err.find() {
-                    return Ok::<_, Infallible>(warp::reply::with_status(
-                        err.to_string(),
-                        StatusCode::BAD_REQUEST,
-                    ));
-                }
+        let recover = |err: Rejection| async move {
+            if let Some(GraphQLBadRequest(err)) = err.find() {
+                return Ok::<_, Infallible>(warp::reply::with_status(
+                    err.to_string(),
+                    StatusCode::BAD_REQUEST,
+                ));
+            }
 
-                Ok(warp::reply::with_status(
-                    "INTERNAL_SERVER_ERROR".to_string(),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                ))
-            });
+            Ok(warp::reply::with_status(
+                "INTERNAL_SERVER_ERROR".to_string(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ))
+        };
 
-        println!("Running at http://0.0.0.0:3030");
-        println!("\nRoutes:");
-        println!("\t/graphql");
-        println!("\t/playground");
-        warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
+        // Conditional routes here is not great
+        if let Some(spa) = self.spa {
+            let assets = warp::fs::dir(spa.assets);
+            let spa_index = warp::fs::file(spa.index);
+
+            let routes = graphql_playground
+                .or(graphql_post)
+                .or(assets)
+                .or(spa_index)
+                .recover(recover);
+            print_start();
+            warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
+        } else {
+            let routes = graphql_playground.or(graphql_post).recover(recover);
+            print_start();
+            warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
+        }
     }
+}
+
+fn print_start() {
+    println!("Running at http://0.0.0.0:3030");
+    println!("\nRoutes:");
+    println!("\t/graphql");
+    println!("\t/playground");
 }
 
 /// SimpleSqlite

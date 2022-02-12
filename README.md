@@ -6,7 +6,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-simple-syrup = "0.5.2"
+simple-syrup = "0.6.0"
 ```
 
 ```rust
@@ -59,6 +59,31 @@ impl QueryRoot {
 
         let result: (i64,) = sqlx::query_as("SELECT 1 + 1").fetch_one(&*pool).await?;
         Ok(result.0)
+    }
+}
+```
+
+Serving an SPA and assets:
+
+```rust
+use simple_syrup::*;
+
+#[tokio::main]
+async fn main() {
+    let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription);
+
+    SimpleGraphql::new(schema)
+        .with_spa("assets/public", "assets/public/index.html")
+        .run()
+        .await
+}
+
+struct QueryRoot;
+
+#[Object]
+impl QueryRoot {
+    async fn zero(&self) -> u32 {
+        0
     }
 }
 ```
