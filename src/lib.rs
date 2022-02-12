@@ -10,8 +10,8 @@ use warp::{http::Response as HttpResponse, http::StatusCode, Filter, Rejection};
 
 pub use anyhow;
 pub use async_graphql::{
-    self, Context, EmptyMutation, EmptySubscription, Object, Result, Schema, SchemaBuilder,
-    SimpleObject,
+    self, Context, EmptyMutation, EmptySubscription, Enum, InputObject, Interface, Object, Result,
+    Scalar, Schema, SchemaBuilder, SimpleObject, Union,
 };
 pub use chrono;
 pub use serde;
