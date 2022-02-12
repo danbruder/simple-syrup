@@ -6,7 +6,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-simple-syrup = "0.6.0"
+simple-syrup = "0.6.1"
 ```
 
 ```rust

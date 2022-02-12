@@ -18,7 +18,7 @@ pub use serde;
 pub use serde_json;
 pub use sqlx::{self, sqlite::SqlitePool};
 pub use tokio;
-pub use uuid;
+pub use uuid::{self, Uuid};
 
 /// SimpleGraphql
 pub struct SimpleGraphql<
